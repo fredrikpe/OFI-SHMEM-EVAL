@@ -22,40 +22,13 @@ int pp_run_test(void)
 	pp_start(); // Timing
 
 	for (i = 0; i < pp_iterations; i++) {
-		//switch (op_type) {
-		//case FT_RMA_WRITE:
-        //printf("i: %d ", i);
-            shmem_put(pp_transfer_size);
-		//	break;
-        /* TODO: Other shmem functions?
-		case FT_RMA_WRITEDATA:
-			ret = fi_writedata(ep, buf, opts.transfer_size, fi_mr_desc(mr),
-				       cq_data, 0, remote.addr, remote.key, ep);
-			if (ret)
-				FT_PRINTERR("fi_writedata", ret);
-
-			ret = ft_rx(0);
-			break;
-		case FT_RMA_READ:
-			ret = fi_read(ep, buf, opts.transfer_size, fi_mr_desc(mr),
-				      0, remote.addr, remote.key, ep);
-			if (ret)
-				FT_PRINTERR("fi_read", ret);
-			break;
-		}
-		if (ret)
-			return ret;
-
-        */
-        //}
+        shmem_put(pp_transfer_size);
+        /* TODO: Other shmem functions? */
 	}
+
 	pp_stop(); // Timing stop
 
-	/*if (opts.machr)
-		show_perf_mr(opts.transfer_size, opts.iterations, &start, &end,
-				1, opts.argc, opts.argv);
-	else*/
-		pp_show_perf(pp_test_name, pp_transfer_size, pp_iterations,
+	pp_show_perf(pp_test_name, pp_transfer_size, pp_iterations,
 				&pstart, &pend, 1);
 
 	return 0;
@@ -82,9 +55,9 @@ static int pp_run(void)
 			goto out;
 	}
 
-    synfin();
+    shmem_finalize();
 out:
-    shutdownS();
+    shutdown_lf();
 	return ret;
 }
 
@@ -114,9 +87,13 @@ int main(int argc, char **argv)
     }
 	
             
-    mainster(argc, argv);   
+    init_opts(argc, argv);   
 
     shmem_init();
     
     pp_run();
+
+    free_res_lf();
+
+    return -ret;
 }

@@ -21,6 +21,71 @@ static enum ft_rma_opcodes op_type = FT_RMA_WRITE;
 struct fi_rma_iov remote;
 static uint64_t cq_data = 1;
 
+int shmem_put(size_t len) //const void *buffer, size_t len)
+{
+    int ret = fi_write(ep, buf, len, fi_mr_desc(mr),
+               0, remote.addr, remote.key, ep);
+    if (ret)
+        FT_PRINTERR("fi_write", ret);
+    
+    ret = ft_get_tx_comp(++tx_seq);
+	if (ret)
+		return ret;
+}
+
+int shmem_ft_sync(void)
+{
+    return ft_sync();
+}
+
+static int run_test(void)
+{
+	int ret, i;
+
+	ret = ft_sync();
+	if (ret)
+		return ret;
+
+	ft_start(); // Timing
+
+	for (i = 0; i < opts.iterations; i++) {
+		switch (op_type) {
+		case FT_RMA_WRITE:
+            //shmem_put(buf, opts.transfer_size);
+			break;
+        /* TODO: Other shmem functions?
+		case FT_RMA_WRITEDATA:
+			ret = fi_writedata(ep, buf, opts.transfer_size, fi_mr_desc(mr),
+				       cq_data, 0, remote.addr, remote.key, ep);
+			if (ret)
+				FT_PRINTERR("fi_writedata", ret);
+
+			ret = ft_rx(0);
+			break;
+		case FT_RMA_READ:
+			ret = fi_read(ep, buf, opts.transfer_size, fi_mr_desc(mr),
+				      0, remote.addr, remote.key, ep);
+			if (ret)
+				FT_PRINTERR("fi_read", ret);
+			break;
+		}
+		if (ret)
+			return ret;
+
+        */
+        }
+	}
+	ft_stop(); // Timing stop
+
+	if (opts.machr)
+		show_perf_mr(opts.transfer_size, opts.iterations, &start, &end,
+				1, opts.argc, opts.argv);
+	else
+		show_perf(test_name, opts.transfer_size, opts.iterations,
+				&start, &end, 1);
+
+	return 0;
+}
 
 static int alloc_ep_res(struct fi_info *fi)
 {
@@ -163,41 +228,7 @@ static int client_connect(void)
 	return 0;
 }
 
-
-int free_res_lf(void)
-{
-	ft_free_res();
-}
-
-int shmem_finalize(void)
-{
-	ft_sync();
-	ft_finalize();
-}
-
-int shutdown_lf(void)
-{
-	fi_shutdown(ep, 0);
-}
-
-int shmem_put(size_t len) //const void *buffer, size_t len)
-{
-    int ret = fi_write(ep, buf, len, fi_mr_desc(mr),
-               0, remote.addr, remote.key, ep);
-    if (ret)
-        FT_PRINTERR("fi_write", ret);
-    
-    ret = ft_get_tx_comp(++tx_seq);
-	if (ret)
-		return ret;
-}
-
-int shmem_ft_sync(void)
-{
-    return ft_sync();
-}
-
-int shmem_init(void)
+    int shmem_init(void)
 {
 	char *node, *service;
 	uint64_t flags;
@@ -222,7 +253,44 @@ int shmem_init(void)
 		return ret;
 }
 
-int init_opts(int argc, char **argv)
+
+static int run(void)
+{
+	int i, ret;
+
+    shmem_init();
+
+	if (!(opts.options & FT_OPT_SIZE)) {
+		for (i = 0; i < TEST_CNT; i++) {
+			if (test_size[i].option > opts.size_option)
+				continue;
+			opts.transfer_size = test_size[i].size;
+			init_test(&opts, test_name, sizeof(test_name));
+			ret = run_test();
+			if (ret)
+				goto out;
+		}
+	} else {
+		init_test(&opts, test_name, sizeof(test_name));
+		ret = run_test();
+		if (ret)
+			goto out;
+	}
+
+	ft_sync();
+	ft_finalize();
+out:
+	fi_shutdown(ep, 0);
+	return ret;
+}
+int synfin(void){
+	ft_sync();
+	ft_finalize();
+}
+int shutdownS(void){
+	fi_shutdown(ep, 0);
+}
+int mainster(int argc, char **argv)
 {
 	int op, ret;
 
@@ -267,7 +335,13 @@ int init_opts(int argc, char **argv)
 	hints->caps = FI_MSG | FI_RMA;
 	hints->mode = FI_LOCAL_MR | FI_RX_CQ_DATA;
 
+	//ret = run();
+
+	//ft_free_res();
 	return -ret;
 }
 
-
+int FTRES(void)
+{
+	ft_free_res();
+}
