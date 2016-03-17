@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
     pp_options = 0;
 
-	while ((op = getopt(argc, argv, "I:S:" )) != -1) {
+/*	while ((op = getopt(argc, argv, "I:S:" )) != -1) {
         switch (op) {
         case 'I':
             pp_options |= PP_OPT_ITER;
@@ -85,7 +85,10 @@ int main(int argc, char **argv)
             break;
         }
     }
-	
+*/
+    	
+    pp_options |= PP_OPT_ITER;
+    pp_iterations = 1;
             
     init_opts(argc, argv);   
 
