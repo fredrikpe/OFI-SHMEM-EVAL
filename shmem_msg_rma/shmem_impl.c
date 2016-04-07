@@ -192,6 +192,19 @@ int shmem_put(size_t len) //const void *buffer, size_t len)
 		return ret;
 }
 
+int shmem_get(size_t len) //const void *buffer, size_t len)
+{
+    int ret = fi_read(ep, buf, len, fi_mr_desc(mr),
+            0, remote.addr, remote.key, ep);
+
+    if (ret)
+		FT_PRINTERR("fi_read", ret);
+    
+    ret = ft_get_tx_comp(++tx_seq);
+	if (ret)
+		return ret;
+}
+
 int shmem_ft_sync(void)
 {
     return ft_sync();
