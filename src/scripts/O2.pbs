@@ -1,0 +1,31 @@
+#!/bin/bash
+#PBS -N m5sim
+#PBS -lwalltime=1:00:00
+#PBS -m a
+#PBS -j oe
+#PBS -lnodes=2:ppn=16,pvmem=1900mb
+#PBS -A nn4650k
+
+
+
+#DATE=date +'%m/%d/%Y %H:%M:%S.%N'
+#DATE=${DATE%???????}
+
+iaddr=$(hostname -I | cut -f2 -d' ')
+node=$(sed -n '19{p;q}' $PBS_NODEFILE)
+
+rm pp_O2_shmem_data_client.txt
+rm pp_O2_shmem_data_server.txt
+
+
+for i in {1..100}
+do
+	ssh fredripi@$node "OFI-SHMEM/shmem_msg_rma/./psO2.out -f verbs $iaddr >> pp_O2_shmem_data_client.txt" & OFI-SHMEM/shmem_msg_rma/./psO2.out -f verbs  >> pp_O2_shmem_data_server.txt 
+done
+
+
+# Delete rows with labels (excluding first line)
+sed -i '2,${/name/d}' pp_O2_shmem_data_server.txt
+sed -i '2,${/name/d}' pp_O2_shmem_data_client.txt
+
+#echo 'Done!'
