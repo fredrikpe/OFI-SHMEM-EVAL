@@ -1,4 +1,4 @@
 # OFI-SHMEM
-Simple SHMEM implementation over Libfabric, based on fabtests.
+Simple SHMEM implementation over Libfabric, based on fabtests, for evaluating the semantic match over IB.
 
-This was a school project, which ended before it was completed.
+This was a school project. Not entirely successful.
